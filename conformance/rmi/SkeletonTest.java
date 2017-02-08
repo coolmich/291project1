@@ -135,7 +135,7 @@ public class SkeletonTest extends Test
         try
         {
 
-            socket.connect(address, 1);
+            socket.connect(address);
             System.out.println("in prob");
 
         }
@@ -159,6 +159,7 @@ public class SkeletonTest extends Test
     protected void clean()
     {
         skeleton.stop();
+        System.out.println("clean()");
         wake();
     }
 

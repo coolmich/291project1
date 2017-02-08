@@ -165,6 +165,7 @@ public class Skeleton<T>
      */
     public synchronized void start() throws RMIException
     {
+        System.out.println("enter start method");
         if(this.running){
             throw new RMIException("server has already been started and has not since stopped");
         }
@@ -191,6 +192,7 @@ public class Skeleton<T>
     public synchronized void stop()
     {
         if(this.listener != null && !this.listener.isStopped()){
+            System.out.println("stopped skeleton");
             this.listener.stop();
             try{
                 this.listenThread.join();
@@ -227,22 +229,30 @@ public class Skeleton<T>
             this.serverPort = address.getPort();
             this.c = c;
             this.server = server;
+            this.isStopped = false;
         }
 
         public void run(){
+            System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             synchronized(this){
                 this.runningThread = Thread.currentThread();
             }
             openServerSocket();
-            while(! isStopped()){
+            System.out.println("bbbbbbbbbbbbbbbb");
+            while(this.isStopped == false){
+                System.out.println("ccccccccccccc");
                 Socket clientSocket = null;
                 try {
+                    System.out.println("serversocket accept");
                     clientSocket = this.serverSocket.accept();
+                    System.out.println("serversocket accept");
+
                 } catch (IOException e) {
                     if(isStopped()) {
                         System.out.println("Server Stopped.") ;
                         return;
                     }
+                    System.out.println("serversocket ");
                     throw new RuntimeException(
                             "Error accepting client connection", e);
                 }
@@ -271,7 +281,8 @@ public class Skeleton<T>
         private void openServerSocket() {
             try {
                 this.serverSocket = new ServerSocket(this.serverPort);
-            } catch (IOException e) {
+            } catch (Exception e) {
+                System.out.println("can not open port");
                 throw new RuntimeException("Cannot open port 8080", e);
             }
         }
