@@ -60,6 +60,10 @@ public class Skeleton<T>
      */
     public Skeleton(Class<T> c, T server)
     {
+        Stub.checkClass(c);
+        if(server == null){
+            throw new NullPointerException("server is null");
+        }
         this.c = c;
         this.server = server;
     }
@@ -84,6 +88,10 @@ public class Skeleton<T>
      */
     public Skeleton(Class<T> c, T server, InetSocketAddress address)
     {
+        Stub.checkClass(c);
+        if(server == null){
+            throw new NullPointerException("server is null");
+        }
         this.c = c;
         this.server = server;
         this.socketAddress = address;
@@ -157,7 +165,9 @@ public class Skeleton<T>
      */
     public synchronized void start() throws RMIException
     {
-        if(this.running) throw new RMIException("server has already been started and has not since stopped");
+        if(this.running){
+            throw new RMIException("server has already been started and has not since stopped");
+        }
         try{
             this.listener = new MultiThreadedServer(this.c, this.server, this.socketAddress);
             this.listenThread = new Thread(listener);
@@ -180,15 +190,18 @@ public class Skeleton<T>
      */
     public synchronized void stop()
     {
-        if(!this.listener.isStopped()){
+        if(this.listener != null && !this.listener.isStopped()){
             this.listener.stop();
             try{
                 this.listenThread.join();
                 this.running = false;
+                stopped(null);
             }
             catch ( InterruptedException e ) {
-                System.out.println(e.toString());
+                stopped(e);
+                e.printStackTrace();
             }
+            System.out.println("The server is stopped now");
         }
     }
 

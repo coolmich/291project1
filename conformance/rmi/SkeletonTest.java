@@ -48,10 +48,16 @@ public class SkeletonTest extends Test
     @Override
     protected void perform() throws TestFailed
     {
+        System.out.println("Start test on Skeleton");
         ensureClassRejected();
+        System.out.println("ensureClassRejected finished");
         ensureNonRemoteInterfaceRejected();
+        System.out.println("ensureNonRemoteInterfaceRejected finished");
         ensureNullPointerExceptions();
+        System.out.println("ensureNullPointerExceptions finished");
         ensureSkeletonRuns();
+        System.out.println("ensureSkeletonRuns finished");
+
     }
 
     /** Performs tests with a running skeleton.
@@ -62,8 +68,12 @@ public class SkeletonTest extends Test
      */
     private void ensureSkeletonRuns() throws TestFailed
     {
+        System.out.println("ensureSkeletonRuns starts to run");
+
         if(probe())
             throw new TestFailed("skeleton accepts connections before start");
+        System.out.println("ensureSkeletonRuns 3");
+
 
         try
         {
@@ -73,19 +83,27 @@ public class SkeletonTest extends Test
         {
             throw new TestFailed("unable to start skeleton", e);
         }
+        System.out.println("ensureSkeletonRuns 1");
+
 
         if(!probe())
             throw new TestFailed("skeleton refuses connections after start");
 
         skeleton.stop();
+        System.out.println("ensureSkeletonRuns 2");
+
 
         synchronized(this)
         {
+            System.out.println("In this place");
             while(!stopped)
             {
+                System.out.println("ensureSkeletonRuns 4");
+
                 try
                 {
                     wait();
+                    System.out.println("wtf");
                 }
                 catch(InterruptedException e) { }
             }
@@ -98,8 +116,11 @@ public class SkeletonTest extends Test
     /** Wakes <code>ensureSkeletonRuns</code>. */
     private synchronized void wake()
     {
+        System.out.println("Calling wake");
         stopped = true;
         notifyAll();
+        System.out.println("Called wake");
+
     }
 
     /** Checks that it is possible to connect to the server.
@@ -113,7 +134,10 @@ public class SkeletonTest extends Test
 
         try
         {
-            socket.connect(address);
+
+            socket.connect(address, 1);
+            System.out.println("in prob");
+
         }
         catch(Exception e)
         {
