@@ -72,7 +72,7 @@ public abstract class Stub implements Serializable
         }
     }
 
-    private static <T>void checkClass(Class<T> c)
+    public static <T>void checkClass(Class<T> c)
             throws NullPointerException, Error
     {
         if(c == null) throw new NullPointerException(ARGNULL);
@@ -84,7 +84,7 @@ public abstract class Stub implements Serializable
         }
     }
 
-    private static <T>void checkSkeleton(Skeleton<T> skeleton, int from){
+    public static <T>void checkSkeleton(Skeleton<T> skeleton, int from){
         if(skeleton == null) throw new NullPointerException(ARGNULL);
         InetSocketAddress add = skeleton.getAddress();
         if(from == 1 && add == null && !skeleton.isRunning()) {
@@ -95,7 +95,7 @@ public abstract class Stub implements Serializable
         }
     }
 
-    private static void checkHost(InetSocketAddress address) throws UnknownHostException{
+    public static void checkHost(InetSocketAddress address) throws UnknownHostException{
         if(address.getAddress().getHostAddress().equals("0.0.0.0") && address.getPort() != -1){
             address.getAddress().getLocalHost();
         }
