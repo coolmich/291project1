@@ -1,5 +1,6 @@
 package rmi;
 
+import java.io.InputStream;
 import java.net.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -163,21 +164,25 @@ public class Skeleton<T>
      or when the server has already been started and has
      not since stopped.
      */
-    public synchronized void start() throws RMIException
-    {
-        System.out.println("enter start method");
-        if(this.running){
+    public synchronized void start() throws RMIException {
+        if (this.running) {
             throw new RMIException("server has already been started and has not since stopped");
         }
-        try{
+        try {
+            if(this.socketAddress == null){
+                ServerSocket tmpSocket = new ServerSocket(0);
+                this.socketAddress = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),
+                        tmpSocket.getLocalPort());
+                tmpSocket.close();
+            }
             this.listener = new MultiThreadedServer(this.c, this.server, this.socketAddress);
             this.listenThread = new Thread(listener);
             this.listenThread.start();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             throw new RMIException("listening thread cannot be created", e);
         }
         this.running = true;
+
     }
 
     /** Stops the skeleton server, if it is already running.
@@ -192,7 +197,7 @@ public class Skeleton<T>
     public synchronized void stop()
     {
         if(this.listener != null && !this.listener.isStopped()){
-            System.out.println("stopped skeleton");
+            System.out.println("stopping skeleton");
             this.listener.stop();
             try{
                 this.listenThread.join();
@@ -203,7 +208,7 @@ public class Skeleton<T>
                 stopped(e);
                 e.printStackTrace();
             }
-            System.out.println("The server is stopped now");
+            System.out.println("The skeleton is stopped now");
         }
     }
 
@@ -220,8 +225,7 @@ public class Skeleton<T>
 
         protected int          serverPort   = 8080;
         protected ServerSocket serverSocket = null;
-        protected boolean      isStopped    = false;
-        protected Thread       runningThread= null;
+        protected boolean      isStopped    = true;
         protected Class<T> c;
         protected T server = null;
 
@@ -229,30 +233,22 @@ public class Skeleton<T>
             this.serverPort = address.getPort();
             this.c = c;
             this.server = server;
-            this.isStopped = false;
         }
 
         public void run(){
-            System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            synchronized(this){
-                this.runningThread = Thread.currentThread();
-            }
             openServerSocket();
-            System.out.println("bbbbbbbbbbbbbbbb");
-            while(this.isStopped == false){
-                System.out.println("ccccccccccccc");
+            this.isStopped = false;
+            while(!this.isStopped){
                 Socket clientSocket = null;
                 try {
-                    System.out.println("serversocket accept");
+                    System.out.println("serversocket trying to accept at port " + serverPort);
                     clientSocket = this.serverSocket.accept();
-                    System.out.println("serversocket accept");
+                    System.out.println("serversocket accepted");
 
                 } catch (IOException e) {
                     if(isStopped()) {
-                        System.out.println("Server Stopped.") ;
                         return;
                     }
-                    System.out.println("serversocket ");
                     throw new RuntimeException(
                             "Error accepting client connection", e);
                 }
@@ -270,21 +266,26 @@ public class Skeleton<T>
         }
 
         public synchronized void stop(){
-            this.isStopped = true;
-            try {
-                this.serverSocket.close();
-            } catch (IOException e) {
-                throw new RuntimeException("Error closing server", e);
+            if(!this.isStopped) {
+                this.isStopped = true; //?
+                try {
+                    this.serverSocket.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error closing server", e);
+                }
             }
         }
 
         private void openServerSocket() {
+//            System.out.println("Now trying to open server socket");
             try {
                 this.serverSocket = new ServerSocket(this.serverPort);
             } catch (Exception e) {
-                System.out.println("can not open port");
-                throw new RuntimeException("Cannot open port 8080", e);
+                System.out.println("can not open port " + this.serverPort);
+                throw new RuntimeException("Cannot open port "+ this.serverPort, e);
             }
+//            System.out.println("Successfully open server socket");
+
         }
 
     }
@@ -315,50 +316,57 @@ public class Skeleton<T>
         }
 
         public void run() {
+            System.out.println("In Skeleton worker run");
+            ObjectOutputStream output = null;
+            ObjectInputStream input = null;
             try {
-                ObjectInputStream input  = new ObjectInputStream(clientSocket.getInputStream());
-                ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
+                output = new ObjectOutputStream(clientSocket.getOutputStream());
+                output.flush();
+                InputStream stream = clientSocket.getInputStream();
+                input = new ObjectInputStream(stream);
                 String methodName = (String) input.readObject();
-                Class parameterTypes[] = (Class[])input.readObject();
-                Object[] args = (Object[])input.readObject();
-                Method method = null;
-                try{
-                    method = server.getClass().getMethod(methodName, parameterTypes);
-                }
-                catch(Exception e) {
-                    System.out.println(e.toString());
-                    output.writeObject("fail");
-                    output.writeObject(e);
-                    return;
-                }
+                Class parameterTypes[] = (Class[]) input.readObject();
+                Object[] args = (Object[]) input.readObject();
+
+                Method method = server.getClass().getMethod(methodName, parameterTypes);
                 Class returnType = method.getReturnType();
-                Object return_value = null;
+                Object return_value;
                 try {
+                    System.out.println("Method "+method.getName()+ " is going to be invoked");
                     return_value = method.invoke(server, args);
-                }
-                catch (Exception e) {
+                    System.out.println("Method "+method.getName()+ " was invoked");
+
+                    output.writeObject("OK");
+                    if(!returnType.equals(Void.TYPE)) {
+                        if (checkRemoteInterface(returnType)) {
+                            Skeleton skeleton = new Skeleton(returnType, return_value);
+                            skeleton.start();
+                            output.writeObject(Stub.create(this.c, skeleton.getAddress()));
+                        } else {
+                            output.writeObject(return_value);
+                        }
+                    }
+                } catch (InvocationTargetException e) {
                     System.out.println(e.toString());
                     output.writeObject("fail");
-                    output.writeObject(e);
-                    return;
+                    output.writeObject(e.getTargetException());
                 }
-
-                output.writeObject("OK");
-                if (checkRemoteInterface(returnType)){
-                    Skeleton skeleton = new Skeleton(returnType, return_value);
-                    skeleton.start();
-                    output.writeObject(Stub.create(this.c, skeleton.getAddress()));
-                }
-                else {
-                    output.writeObject(return_value);
-                }
-
-
-                output.close();
-                input.close();
-            }catch (Exception e) {
+            } catch (Exception e) {
                 //report exception somewhere.
-                e.printStackTrace();
+                service_error(new RMIException(e));
+            } finally {
+                try {
+                    if (output != null) {
+                        output.flush();
+                        output.close();
+                    }
+                    if (input != null) {
+                        input.close();
+                    }
+                    this.clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

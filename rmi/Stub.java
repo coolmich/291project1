@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.net.*;
 import java.lang.reflect.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /** RMI stub factory.
@@ -87,7 +88,7 @@ public abstract class Stub implements Serializable
     public static <T>void checkSkeleton(Skeleton<T> skeleton, int from){
         if(skeleton == null) throw new NullPointerException(ARGNULL);
         InetSocketAddress add = skeleton.getAddress();
-        if(from == 1 && add == null && !skeleton.isRunning()) {
+        if(from == 1 && add == null ){//&& !skeleton.isRunning()) {
             throw new IllegalStateException(ILLEGALSTATE1);
         }
         if(from == 2 && add.getPort() == -1) {
@@ -136,6 +137,9 @@ public abstract class Stub implements Serializable
     {
         checkClass(c);
         checkSkeleton(skeleton, 2);
+        if(hostname == null){
+            throw new NullPointerException(ARGNULL);
+        }
         StubInvocationHandler handler =
                 new StubInvocationHandler(new InetSocketAddress(hostname, skeleton.getAddress().getPort()), c);
         try {
@@ -165,6 +169,9 @@ public abstract class Stub implements Serializable
     public static <T> T create(Class<T> c, InetSocketAddress address)
     {
         checkClass(c);
+        if(address == null){
+            throw new NullPointerException(ARGNULL);
+        }
         StubInvocationHandler handler = new StubInvocationHandler(address, c);
         try {
             return (T) Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, handler);
@@ -188,7 +195,7 @@ public abstract class Stub implements Serializable
         }
 
         @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws RMIException {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Exception {
             switch (method.getName()) {
                 case "equals":
                     if (args[0] instanceof Proxy) {
@@ -204,6 +211,7 @@ public abstract class Stub implements Serializable
                     return "Remote interface: " + interfaceClass.getCanonicalName() + "; host&port: " + address.toString();
                 default:
                     try {
+                        System.out.println("Going to invoke method "+method.getName()+" in Stub");
                         Socket socket = new Socket(address.getHostString(), address.getPort());
                         ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                         outputStream.flush();
@@ -211,6 +219,7 @@ public abstract class Stub implements Serializable
                         outputStream.writeObject(method.getParameterTypes());
                         outputStream.writeObject(args);
                         outputStream.flush();
+                        System.out.println("Finish sending method meta data in Stub to addr: "+address);
 
                         ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                         String status = (String) inputStream.readObject();
@@ -231,6 +240,10 @@ public abstract class Stub implements Serializable
                             throw e;
                         }
                     } catch (Exception e) {
+                        if(!e.getClass().equals(RMIException.class) &&
+                                (Arrays.asList(method.getExceptionTypes()).contains(e.getClass()))){
+                            throw e;
+                        }
                         throw new RMIException(e.getCause());
                     }
             }

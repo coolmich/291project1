@@ -665,7 +665,9 @@ public class Series implements Serializable
             // is considered to be a fatal error.
             try
             {
-                state.test.clean();
+                System.out.println("Clearning up threads....");
+
+            state.test.clean();
             }
             catch(Throwable t)
             {

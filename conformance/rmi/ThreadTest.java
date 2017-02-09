@@ -52,6 +52,7 @@ public class ThreadTest extends Test
     protected void perform() throws TestFailed
     {
         // Create the stub.
+        System.out.println("Thread test starts now");
         try
         {
             stub = Stub.create(TestInterface.class, skeleton);
@@ -64,15 +65,23 @@ public class ThreadTest extends Test
         // Start a second thread that calls rendezvous on the test server.
         new Thread(new SecondThread()).start();
 
+        System.out.println("0000000000");
+
         // Call rendezvous on the test server.
         try
         {
+            System.out.println("11111111");
+
             stub.rendezvous();
+            System.out.println("222222222");
+
         }
         catch(Throwable t)
         {
             throw new TestFailed("unable to rendezvous in first thread", t);
         }
+        System.out.println("Thread test finished");
+
     }
 
     /** Stops the skeleton server. */

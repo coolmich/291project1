@@ -48,15 +48,15 @@ public class SkeletonTest extends Test
     @Override
     protected void perform() throws TestFailed
     {
-        System.out.println("Start test on Skeleton");
+//        System.out.println("Start test on Skeleton");
         ensureClassRejected();
-        System.out.println("ensureClassRejected finished");
+//        System.out.println("ensureClassRejected finished");
         ensureNonRemoteInterfaceRejected();
-        System.out.println("ensureNonRemoteInterfaceRejected finished");
+//        System.out.println("ensureNonRemoteInterfaceRejected finished");
         ensureNullPointerExceptions();
-        System.out.println("ensureNullPointerExceptions finished");
+//        System.out.println("ensureNullPointerExceptions finished");
         ensureSkeletonRuns();
-        System.out.println("ensureSkeletonRuns finished");
+//        System.out.println("ensureSkeletonRuns finished");
 
     }
 
@@ -68,11 +68,11 @@ public class SkeletonTest extends Test
      */
     private void ensureSkeletonRuns() throws TestFailed
     {
-        System.out.println("ensureSkeletonRuns starts to run");
+//        System.out.println("ensureSkeletonRuns starts to run");
 
         if(probe())
             throw new TestFailed("skeleton accepts connections before start");
-        System.out.println("ensureSkeletonRuns 3");
+//        System.out.println("ensureSkeletonRuns 3");
 
 
         try
@@ -83,27 +83,28 @@ public class SkeletonTest extends Test
         {
             throw new TestFailed("unable to start skeleton", e);
         }
-        System.out.println("ensureSkeletonRuns 1");
+//        System.out.println("ensureSkeletonRuns 1");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 
         if(!probe())
             throw new TestFailed("skeleton refuses connections after start");
 
         skeleton.stop();
-        System.out.println("ensureSkeletonRuns 2");
+//        System.out.println("ensureSkeletonRuns 2");
 
 
         synchronized(this)
         {
-            System.out.println("In this place");
             while(!stopped)
             {
-                System.out.println("ensureSkeletonRuns 4");
-
                 try
                 {
                     wait();
-                    System.out.println("wtf");
                 }
                 catch(InterruptedException e) { }
             }
@@ -116,11 +117,8 @@ public class SkeletonTest extends Test
     /** Wakes <code>ensureSkeletonRuns</code>. */
     private synchronized void wake()
     {
-        System.out.println("Calling wake");
         stopped = true;
         notifyAll();
-        System.out.println("Called wake");
-
     }
 
     /** Checks that it is possible to connect to the server.
@@ -134,9 +132,10 @@ public class SkeletonTest extends Test
 
         try
         {
-
+//            System.out.println("in prob trying to connect to address " + address.toString());
             socket.connect(address);
-            System.out.println("in prob");
+//            System.out.println("in prob connected");
+
 
         }
         catch(Exception e)
@@ -159,7 +158,6 @@ public class SkeletonTest extends Test
     protected void clean()
     {
         skeleton.stop();
-        System.out.println("clean()");
         wake();
     }
 
