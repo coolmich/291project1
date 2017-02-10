@@ -333,6 +333,9 @@ public class Skeleton<T>
                 Object return_value;
                 try {
                     System.out.println("Method "+method.getName()+ " is going to be invoked");
+//                    System.out.println("server: "+server+", args: "+args);
+//                    System.out.println("why do you stop ?");
+                    method.setAccessible(true);
                     return_value = method.invoke(server, args);
                     System.out.println("Method "+method.getName()+ " was invoked");
 

@@ -91,7 +91,7 @@ public abstract class Stub implements Serializable
         if(from == 1 && add == null ){//&& !skeleton.isRunning()) {
             throw new IllegalStateException(ILLEGALSTATE1);
         }
-        if(from == 2 && add.getPort() == -1) {
+        if(from == 2 && (add == null || add.getPort() == -1)) {
             throw new IllegalStateException(ILLEGALSTATE2);
         }
     }

@@ -33,7 +33,6 @@ public class TestServer implements TestInterface
     {
         // If wake is false, this thread should go to sleep. If it is true,
         // this thread should wake the sleeping thread.
-        System.out.println("inside rendezvous line 1");
         if(!wake)
         {
             wake = true;
@@ -53,8 +52,6 @@ public class TestServer implements TestInterface
 
             notifyAll();
         }
-        System.out.println("inside rendezvous last line");
-
     }
 
     /** Wakes all sleeping receiving threads. */
