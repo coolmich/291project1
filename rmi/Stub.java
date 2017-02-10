@@ -78,7 +78,7 @@ public abstract class Stub implements Serializable
     {
         if(c == null) throw new NullPointerException(ARGNULL);
         if(!c.isInterface()) throw new Error(NONINTERFACE);
-        for(Method method: c.getDeclaredMethods()){
+        for(Method method: c.getMethods()){
             if(!Arrays.asList(method.getExceptionTypes()).contains(RMIException.class)){
                 throw new Error(REMOTECLASSERR);
             }
@@ -181,7 +181,7 @@ public abstract class Stub implements Serializable
     }
 
 
-    private static class StubInvocationHandler implements InvocationHandler {
+    private static class StubInvocationHandler implements InvocationHandler, Serializable {
 
         private InetSocketAddress address;
         private Class interfaceClass;
@@ -196,56 +196,61 @@ public abstract class Stub implements Serializable
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Exception {
-            switch (method.getName()) {
-                case "equals":
-                    if (args[0] instanceof Proxy) {
-                        StubInvocationHandler otherHandler = (StubInvocationHandler) Proxy.getInvocationHandler(args[0]);
-                        return otherHandler.getInterfaceClass().equals(interfaceClass) &&
-                                otherHandler.getInetSocketAddress().equals(address);
-                    } else {
-                        return false;
-                    }
-                case "hashCode":
-                    return interfaceClass.hashCode() * 41 + address.hashCode() * 53;
-                case "toString":
-                    return "Remote interface: " + interfaceClass.getCanonicalName() + "; host&port: " + address.toString();
-                default:
-                    try {
-                        System.out.println("Going to invoke method "+method.getName()+" in Stub");
-                        Socket socket = new Socket(address.getHostString(), address.getPort());
-                        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                        outputStream.flush();
-                        outputStream.writeObject(method.getName());
-                        outputStream.writeObject(method.getParameterTypes());
-                        outputStream.writeObject(args);
-                        outputStream.flush();
-                        System.out.println("Finish sending method meta data in Stub to addr: "+address);
+            if(Arrays.asList(this.interfaceClass.getMethods()).contains(method)){
+                try {
+                    System.out.println("Going to invoke method "+method.getName()+" in Stub");
+                    Socket socket = new Socket(address.getHostString(), address.getPort());
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    outputStream.flush();
+                    outputStream.writeObject(method.getName());
+                    outputStream.writeObject(method.getParameterTypes());
+                    outputStream.writeObject(args);
+                    outputStream.flush();
+                    System.out.println("Finish sending method meta data in Stub to addr: "+address);
 
-                        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                        String status = (String) inputStream.readObject();
-                        if (status.equals("OK")) {
-                            if (!method.getReturnType().equals(Void.TYPE)) {
-                                Object ret = inputStream.readObject();
-                                outputStream.close();
-                                inputStream.close();
-                                socket.close();
-                                return ret;
-                            }
-                            return null;
-                        } else {
-                            Exception e = (Exception) inputStream.readObject();
+                    ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                    String status = (String) inputStream.readObject();
+                    if (status.equals("OK")) {
+                        if (!method.getReturnType().equals(Void.TYPE)) {
+                            Object ret = inputStream.readObject();
                             outputStream.close();
                             inputStream.close();
                             socket.close();
-                            throw e;
+                            return ret;
                         }
-                    } catch (Exception e) {
-                        if(!e.getClass().equals(RMIException.class) &&
-                                (Arrays.asList(method.getExceptionTypes()).contains(e.getClass()))){
-                            throw e;
-                        }
-                        throw new RMIException(e.getCause());
+                        return null;
+                    } else {
+                        Exception e = (Exception) inputStream.readObject();
+                        outputStream.close();
+                        inputStream.close();
+                        socket.close();
+                        throw e;
                     }
+                } catch (Exception e) {
+                    if(!e.getClass().equals(RMIException.class) &&
+                            (Arrays.asList(method.getExceptionTypes()).contains(e.getClass()))){
+                        throw e;
+                    }
+                    throw new RMIException(e.getCause());
+                }
+            }else {
+                switch (method.getName()) {
+                    case "equals":
+                        System.out.println("++++++++ equals called ++++++++");
+                        if (args[0] instanceof Proxy) {
+                            StubInvocationHandler otherHandler = (StubInvocationHandler) Proxy.getInvocationHandler(args[0]);
+                            return otherHandler.getInterfaceClass().equals(interfaceClass) &&
+                                    otherHandler.getInetSocketAddress().equals(address);
+                        } else {
+                            return false;
+                        }
+                    case "hashCode":
+                        return interfaceClass.hashCode() * 41 + address.hashCode() * 53;
+                    case "toString":
+                        return "Remote interface: " + interfaceClass.getCanonicalName() + "; host&port: " + address.toString();
+                    default:
+                        throw new RMIException("Method not found");
+                }
             }
         }
 

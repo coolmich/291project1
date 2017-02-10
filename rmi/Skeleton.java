@@ -328,7 +328,7 @@ public class Skeleton<T>
                 Class parameterTypes[] = (Class[]) input.readObject();
                 Object[] args = (Object[]) input.readObject();
 
-                Method method = server.getClass().getMethod(methodName, parameterTypes);
+                Method method = c.getMethod(methodName, parameterTypes);
                 Class returnType = method.getReturnType();
                 Object return_value;
                 try {
@@ -341,13 +341,13 @@ public class Skeleton<T>
 
                     output.writeObject("OK");
                     if(!returnType.equals(Void.TYPE)) {
-                        if (checkRemoteInterface(returnType)) {
-                            Skeleton skeleton = new Skeleton(returnType, return_value);
-                            skeleton.start();
-                            output.writeObject(Stub.create(this.c, skeleton.getAddress()));
-                        } else {
+//                        if (checkRemoteInterface(returnType)) {
+//                            Skeleton skeleton = new Skeleton(returnType, return_value);
+//                            skeleton.start();
+//                            output.writeObject(Stub.create(this.c, skeleton.getAddress()));
+//                        } else {
                             output.writeObject(return_value);
-                        }
+//                        }
                     }
                 } catch (InvocationTargetException e) {
                     System.out.println(e.toString());
