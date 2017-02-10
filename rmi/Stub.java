@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.net.*;
 import java.lang.reflect.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /** RMI stub factory.
@@ -198,7 +197,6 @@ public abstract class Stub implements Serializable
         public Object invoke(Object proxy, Method method, Object[] args) throws Exception {
             if(Arrays.asList(this.interfaceClass.getMethods()).contains(method)){
                 try {
-                    System.out.println("Going to invoke method "+method.getName()+" in Stub");
                     Socket socket = new Socket(address.getHostString(), address.getPort());
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                     outputStream.flush();
@@ -206,7 +204,6 @@ public abstract class Stub implements Serializable
                     outputStream.writeObject(method.getParameterTypes());
                     outputStream.writeObject(args);
                     outputStream.flush();
-                    System.out.println("Finish sending method meta data in Stub to addr: "+address);
 
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                     String status = (String) inputStream.readObject();
@@ -236,7 +233,6 @@ public abstract class Stub implements Serializable
             }else {
                 switch (method.getName()) {
                     case "equals":
-                        System.out.println("++++++++ equals called ++++++++");
                         if (args[0] instanceof Proxy) {
                             StubInvocationHandler otherHandler = (StubInvocationHandler) Proxy.getInvocationHandler(args[0]);
                             return otherHandler.getInterfaceClass().equals(interfaceClass) &&
