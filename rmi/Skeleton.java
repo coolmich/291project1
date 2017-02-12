@@ -178,6 +178,7 @@ public class Skeleton<T>
             this.listener = new MultiThreadedServer(this.c, this.server, this.socketAddress);
             this.listenThread = new Thread(listener);
             this.listenThread.start();
+            while(this.listener.isStopped()){}
         } catch (Exception e) {
             throw new RMIException("listening thread cannot be created", e);
         }
