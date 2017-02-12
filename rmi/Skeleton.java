@@ -178,6 +178,7 @@ public class Skeleton<T>
             this.listener = new MultiThreadedServer(this.c, this.server, this.socketAddress);
             this.listenThread = new Thread(listener);
             this.listenThread.start();
+            while(this.listener.isStopped()){}
         } catch (Exception e) {
             throw new RMIException("listening thread cannot be created", e);
         }
@@ -326,7 +327,13 @@ public class Skeleton<T>
 
                     output.writeObject("OK");
                     if(!returnType.equals(Void.TYPE)) {
-                        output.writeObject(return_value);
+                        if (checkRemoteInterface(returnType)) {
+                            Skeleton skeleton = new Skeleton(returnType, return_value);
+                            skeleton.start();
+                            output.writeObject(Stub.create(returnType, skeleton.getAddress()));
+                        } else {
+                            output.writeObject(return_value);
+                        }
                     }
                 } catch (InvocationTargetException e) {
                     output.writeObject("fail");
