@@ -5,7 +5,7 @@ import rmi.Stub;
 public class Client{
       public static void main(String args[]){
         try{
-          InetSocketAddress address = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), Integer.parseInt(args[0]));
+          InetSocketAddress address = new InetSocketAddress(args[0], Integer.parseInt(args[1]));
           System.out.println(address.getHostString() + address.getPort());
           PingServerFactory factory = Stub.create(PingServerFactory.class, address);
           PingServer server = factory.makePingServer();

@@ -198,7 +198,6 @@ public class Skeleton<T>
     public synchronized void stop()
     {
         if(this.listener != null && !this.listener.isStopped()){
-            System.out.println("stopping skeleton");
             this.listener.stop();
             try{
                 this.listenThread.join();
@@ -209,7 +208,6 @@ public class Skeleton<T>
                 stopped(e);
                 e.printStackTrace();
             }
-            System.out.println("The skeleton is stopped now");
         }
     }
 
@@ -242,10 +240,7 @@ public class Skeleton<T>
             while(!this.isStopped){
                 Socket clientSocket = null;
                 try {
-                    System.out.println("serversocket trying to accept at port " + serverPort);
                     clientSocket = this.serverSocket.accept();
-                    System.out.println("serversocket accepted");
-
                 } catch (IOException e) {
                     if(isStopped()) {
                         return;
@@ -258,7 +253,6 @@ public class Skeleton<T>
                                 clientSocket, this.c, this.server)
                 ).start();
             }
-            System.out.println("Server Stopped.") ;
         }
 
 
@@ -278,15 +272,11 @@ public class Skeleton<T>
         }
 
         private void openServerSocket() {
-//            System.out.println("Now trying to open server socket");
             try {
                 this.serverSocket = new ServerSocket(this.serverPort);
             } catch (Exception e) {
-                System.out.println("can not open port " + this.serverPort);
                 throw new RuntimeException("Cannot open port "+ this.serverPort, e);
             }
-//            System.out.println("Successfully open server socket");
-
         }
 
     }
@@ -317,7 +307,6 @@ public class Skeleton<T>
         }
 
         public void run() {
-            System.out.println("In Skeleton worker run");
             ObjectOutputStream output = null;
             ObjectInputStream input = null;
             try {
@@ -333,12 +322,8 @@ public class Skeleton<T>
                 Class returnType = method.getReturnType();
                 Object return_value;
                 try {
-                    System.out.println("Method "+method.getName()+ " is going to be invoked");
-//                    System.out.println("server: "+server+", args: "+args);
-//                    System.out.println("why do you stop ?");
                     method.setAccessible(true);
                     return_value = method.invoke(server, args);
-                    System.out.println("Method "+method.getName()+ " was invoked");
 
                     output.writeObject("OK");
                     if(!returnType.equals(Void.TYPE)) {
@@ -351,7 +336,6 @@ public class Skeleton<T>
                         }
                     }
                 } catch (InvocationTargetException e) {
-                    System.out.println(e.toString());
                     output.writeObject("fail");
                     output.writeObject(e.getTargetException());
                 }

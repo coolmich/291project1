@@ -197,7 +197,6 @@ public abstract class Stub implements Serializable
         public Object invoke(Object proxy, Method method, Object[] args) throws Exception {
             if(Arrays.asList(this.interfaceClass.getMethods()).contains(method)){
                 try {
-                    System.out.println("Going to invoke method "+method.getName()+" in Stub");
                     Socket socket = new Socket(address.getHostString(), address.getPort());
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                     outputStream.flush();
@@ -205,7 +204,6 @@ public abstract class Stub implements Serializable
                     outputStream.writeObject(method.getParameterTypes());
                     outputStream.writeObject(args);
                     outputStream.flush();
-                    System.out.println("Finish sending method meta data in Stub to addr: "+address);
 
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                     String status = (String) inputStream.readObject();
