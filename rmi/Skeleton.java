@@ -341,13 +341,13 @@ public class Skeleton<T>
 
                     output.writeObject("OK");
                     if(!returnType.equals(Void.TYPE)) {
-//                        if (checkRemoteInterface(returnType)) {
-//                            Skeleton skeleton = new Skeleton(returnType, return_value);
-//                            skeleton.start();
-//                            output.writeObject(Stub.create(this.c, skeleton.getAddress()));
-//                        } else {
+                        if (checkRemoteInterface(returnType)) {
+                            Skeleton skeleton = new Skeleton(returnType, return_value);
+                            skeleton.start();
+                            output.writeObject(Stub.create(returnType, skeleton.getAddress()));
+                        } else {
                             output.writeObject(return_value);
-//                        }
+                        }
                     }
                 } catch (InvocationTargetException e) {
                     System.out.println(e.toString());

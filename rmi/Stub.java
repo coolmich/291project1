@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.net.*;
 import java.lang.reflect.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /** RMI stub factory.
@@ -236,7 +235,6 @@ public abstract class Stub implements Serializable
             }else {
                 switch (method.getName()) {
                     case "equals":
-                        System.out.println("++++++++ equals called ++++++++");
                         if (args[0] instanceof Proxy) {
                             StubInvocationHandler otherHandler = (StubInvocationHandler) Proxy.getInvocationHandler(args[0]);
                             return otherHandler.getInterfaceClass().equals(interfaceClass) &&
